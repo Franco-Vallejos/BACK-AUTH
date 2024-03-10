@@ -1,18 +1,23 @@
 import { Router } from "express"
-import { getLogin, getRefreshToken, getSignout, getTodos, getUser } from "../controllers/products.controller.js";
+import { getLogin, getRefreshToken, logOut, getTodos, getUser } from "../controllers/products.controller.login.js";
+import {getCalendar, getPersonal} from '../controllers/products.controller.calendar.js'
+import authenticateToken from "../auth/authenticatedToken.js";
 
 const router = Router();
 
-router.get('/api/login', getLogin);
+router.post('/api/login', getLogin);
 
-router.get('/api/refreshToken', getRefreshToken)
+router.post('/api/refreshToken', getRefreshToken)
 
-router.get('/api/signout', getSignout);
+router.delete('/api/logout', logOut);
 
 router.get('/api/todos', getTodos);
 
-router.get('/api/user', getUser);
+router.get('/api/user', authenticateToken, getUser);
 
+router.get('/api/query/calendar/:month', authenticateToken, getCalendar);
+
+router.get('/api/query/personal/all', authenticateToken, getPersonal)
 
 export default router;
 

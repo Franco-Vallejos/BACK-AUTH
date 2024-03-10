@@ -1,17 +1,16 @@
 import  Express  from "express";
-import  Cors  from "cors";
+import  cors  from "cors";
 import config from "./config.js"
 import productsRouter from './routes/products.routes.js'
 
 
 const app = Express();
-
 const port = config.port
-
-app.use(Cors());
 app.use(Express.json());
-
+app.use(cors());
 app.use(productsRouter);
+app.use(Express.urlencoded({extended : false}));
+
 
 app.get("/", (req, res) => {
     res.send("Hello World");
