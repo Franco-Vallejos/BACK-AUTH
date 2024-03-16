@@ -37,6 +37,26 @@ export const getPersonal = async (req, res) => {
     }
 }
 
+export const getUserRequest = async (req, res) => {
+    const dni = req.user.username;
+
+    if(!dni){
+        return res.status(505).json(jsonResponse(505, {error: "No se recupero correctamente el username del token"}))
+    }
+
+    try{
+        const pool = await getConnectionCalendar();
+        const result = await pool.request()
+                        .query('exec [api].showUserRequest ' + dni + ';');
+        pool.close();
+        return res.status(200).json(jsonResponse(200, result.recordsets[0]))
+    }catch(error){
+        console.log(error);
+        return res.status(800).json(jsonResponse(800, {error: "The server has problems whit DDBB" , info : error}));
+    }
+
+}
+
 export const createNewProduct = async (req, res) => {
     const {dia, tm, tt} = req.body;
 

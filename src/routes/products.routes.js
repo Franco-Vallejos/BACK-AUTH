@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { getLogin, getRefreshToken, logOut, getTodos, getUser } from "../controllers/products.controller.login.js";
-import {getCalendar, getPersonal} from '../controllers/products.controller.calendar.js'
+import {getCalendar, getPersonal, getUserRequest} from '../controllers/products.controller.calendar.js'
 import authenticateToken from "../auth/authenticatedToken.js";
 
 const router = Router();
@@ -17,7 +17,9 @@ router.get('/api/user', authenticateToken, getUser);
 
 router.get('/api/query/calendar/:month', authenticateToken, getCalendar);
 
-router.get('/api/query/personal/all', authenticateToken, getPersonal)
+router.get('/api/query/personal/all', authenticateToken, getPersonal);
+
+router.get('/api/query/request/user', authenticateToken, getUserRequest);
 
 export default router;
 

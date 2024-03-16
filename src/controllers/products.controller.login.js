@@ -78,8 +78,6 @@ export const getRefreshToken = async (req, res) => {
     } catch (error) {
         console.log(error)
         return res.status(403).json({ error: "Token de actualización inválido" });
-    }finally{
-        pool.close()
     }
 }
 
