@@ -80,3 +80,54 @@ export const createNewProduct = async (req, res) => {
         }
         res.json('productoos');
 }
+
+export const addUserRequest = async (req, res) => {
+    const {originDni, originDate, destinationDni, destinationDate} = req.body;
+    if (!originDni || !originDate  || !destinationDni || !destinationDate ){
+        return res.status(600).json(jsonResponse(600, {error: "Missing information"}));
+    }
+    const formatedOriginDate = new Date(originDate);
+    const formatedDestinationDate = new Date(destinationDate);
+
+    if(!(formatedOriginDate.getDate()) || !(formatedDestinationDate.getDate())){
+
+        return res.status(600).json(jsonResponse(600, {error: "Missing information"}));
+    }
+
+    const standarOriginDate = formatedOriginDate.getFullYear() + '-' + (formatedOriginDate.getMonth() + 1 )+ '-' + formatedOriginDate.getDate();
+    const standarDestinationDate = formatedDestinationDate.getFullYear() + '-' + (formatedDestinationDate.getMonth() + 1) + '-' + formatedDestinationDate.getDate();
+    console.log('exec [api].insertOnRequest ' + originDni + ", '" + standarOriginDate + "', "
+    + destinationDni + ", '" + standarDestinationDate + "';")
+    try{
+        const pool = await getConnectionCalendar();
+        const result = await pool.request()
+                    .query('exec [api].insertOnRequest ' + originDni + ", '" + standarOriginDate + "',  "
+                    + destinationDni + ", '" + standarDestinationDate + "';");
+        pool.close();
+        res.status(200).json(jsonResponse(200, {message: "Added request"}));
+    }catch(error){
+        console.log(error);
+        res.status(800).json(jsonResponse(800, {error: "The server has problems whit DDBB"}))
+    }
+
+}
+
+export const deleteUserRequest = async(req, res) => {
+    const {id} = req.body;
+
+    if(!id){
+        return res.status(600).json(jsonResponse(600, {error: "Missing information"}));
+    }
+
+    try{
+        const pool = await getConnectionCalendar();
+        const result = await pool.request()
+                        .query('exec [api].deleteOnRequest ' + id + ';')
+        pool.close();
+        res.status(200).json(jsonResponse(200, {message: "elimited Request"}))
+    }catch(error){
+        console.log(error);
+        res.status(800).json(jsonResponse(800, {error: "The server has problems whit DDBB"}))
+    }
+}
+

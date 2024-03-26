@@ -3,6 +3,14 @@ go
 use calendar
 go
 
+EXEC sp_configure 'show advanced options', 1;
+go
+RECONFIGURE;
+go
+EXEC sp_configure 'default time zone', 3; -- GMT-3:00 (Buenos Aires, Argentina)
+go
+RECONFIGURE;
+
 create schema [months]
 go
 create schema [api]
@@ -158,6 +166,7 @@ create table [dbo].personal(
 )
 
 create table [dbo].request(
+	id int identity(1,1) primary key,
 	originDni int check (originDni < 99999999 and originDni>10000000),
 	originDate date,
 	destinationDni int check (destinationDni < 99999999 and destinationDni>10000000),
@@ -165,6 +174,8 @@ create table [dbo].request(
 )
 
 insert into dbo.request (originDni, originDate, destinationDni, destinationDate) values (43386520, DATEFROMPARTS(2024, 01, 31), 60000000, DATEFROMPARTS(2024, 02, 28))
+insert into dbo.request (originDni, originDate, destinationDni, destinationDate) values (60000000, DATEFROMPARTS(2024, 01, 30), 43386520, DATEFROMPARTS(2024, 02, 26))
+
 select * from dbo.request
 -------------------------------CONSTRAINT-------------------------------
 
@@ -222,9 +233,11 @@ insert into months.february(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 
 go
 
 insert into months.march(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (50000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
-insert into months.march (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM')
+insert into months.march (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.march (dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.march(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
+
+update montHs.march set [27] = 'TTM' where dni = 43386520
 go
 
 -------------------------------STORE PROCEDURE-------------------------------
@@ -266,8 +279,81 @@ begin
 	set @SQLDinamic = N'select * from [dbo].request where originDni = ' + cast(@dni as varchar) + N' or destinationDni = ' + cast(@dni as varchar); 
 	exec sys.[sp_executesql] @SQLDinamic;
 END
+go
 
-exec api.showUserRequest 43386520
+create or alter procedure [api].insertOnRequest (@originDni int, @originDate date, @destinationDni int, @destinationDate date)
+WITH EXECUTE AS OWNER
+as
+begin
+	declare @SQLDinamic nvarchar(max);
+	set @SQLDinamic = N'INSERT INTO [dbo].request (originDni, originDate, destinationDni, destinationDate)
+					values (' + CAST(@originDni as nvarchar(20)) + ', ''' + CONVERT(nvarchar(20), @originDate, 120) + 
+					''', ' + CAST(@destinationDni as nvarchar(20)) + ', ''' + CONVERT(nvarchar(20), @destinationDate, 120) + ''' );'
+	exec sys.[sp_executesql] @SQLDinamic;
+end
+go
+
+create or alter procedure [api].deleteOnRequest (@id int)
+WITH EXECUTE AS OWNER
+as
+begin
+	delete from dbo.request where id = @id;
+end
+go
+
+CREATE OR ALTER PROCEDURE [api].updateCalendar (@id INT)
+WITH EXECUTE AS OWNER
+AS
+BEGIN
+    DECLARE @originDate DATE,
+            @destinationDate DATE,
+            @originTypeTurn CHAR(3),
+            @destinationTypeTurn CHAR(3),
+            @originDni INT,
+            @destinationDni INT,
+            @SQLDynamic NVARCHAR(MAX)
+
+    SET @originDate = (SELECT originDate FROM dbo.request WHERE id = @id)
+    SET @destinationDate = (SELECT destinationDate FROM dbo.request WHERE id = @id)
+    SET @originDni = (SELECT originDni FROM dbo.request WHERE id = @id)
+    SET @destinationDni = (SELECT destinationDni FROM dbo.request WHERE id = @id)
+
+    SET @SQLDynamic = N'set @originTypeTurn = (select [' + CAST(DAY(@originDate) AS NVARCHAR) + N'] from [months].' + DATENAME(MONTH,@originDate) + N' where dni = ' + CAST(@originDni AS NVARCHAR) + N');'
+    EXEC sys.sp_executesql @SQLDynamic, N'@originTypeTurn CHAR(3) OUTPUT', @originTypeTurn OUTPUT;
+
+    SET @SQLDynamic = N'set @destinationTypeTurn = (select [' + CAST(DAY(@destinationDate) AS NVARCHAR) + N'] from [months].' + DATENAME(MONTH, @destinationDate) + N' where dni = ' + CAST(@destinationDni AS NVARCHAR) + N');'
+    EXEC sys.sp_executesql @SQLDynamic, N'@destinationTypeTurn CHAR(3) OUTPUT', @destinationTypeTurn OUTPUT;
+
+    SET @SQLDynamic = N'UPDATE [months].' + DATENAME(MONTH, @originDate) + N' SET [' + CAST(DAY(@originDate) AS NVARCHAR) + N'] = @originTypeTurn WHERE dni = ' +  CAST(@destinationDni AS NVARCHAR) + N';'
+    EXEC sys.sp_executesql @SQLDynamic, N'@originTypeTurn CHAR(3)', @originTypeTurn;
+
+    SET @SQLDynamic = N'UPDATE [months].' + DATENAME(MONTH, @destinationDate) + N' SET [' + CAST(DAY(@destinationDate) AS NVARCHAR) + N'] = @destinationTypeTurn WHERE dni = ' +  CAST(@originDni AS NVARCHAR) + N';'
+    EXEC sys.sp_executesql @SQLDynamic, N'@destinationTypeTurn CHAR(3)', @destinationTypeTurn;
+
+	SET @SQLDynamic = N'UPDATE [months].' + DATENAME(MONTH, @originDate) + N' SET [' + CAST(DAY(@originDate) AS NVARCHAR) + N'] = NULL WHERE dni = ' +  CAST(@originDni AS NVARCHAR) + N';'
+    EXEC sys.sp_executesql @SQLDynamic;
+
+    SET @SQLDynamic = N'UPDATE [months].' + DATENAME(MONTH, @destinationDate) + N' SET [' + CAST(DAY(@destinationDate) AS NVARCHAR) + N'] = NULL WHERE dni = ' +  CAST(@destinationDni AS NVARCHAR) + N';'
+    EXEC sys.sp_executesql @SQLDynamic;
+END
+
+
+update [months].March set [27] = (select [27] from [months].March where dni = 43386520) where dni = 50000000;
+
+exec [api].InsertOnRequest 43386520, '2024-2-26',  50000000, '2024-2-25';
+exec [api].insertOnRequest 43386520, '2024-3-27', 50000000, '2024-3-25';
+delete from dbo.request
+exec api.InsertOnRequest 43386520, '2023-01-01', 70000000, '2023-02-11'
+
+exec api.deleteOnRequest 1
+
+select * from dbo.request
+
+exec api.updateCalendar 10;
+
+select * from months.march
+DELETE FROM dbo.request where id = 9
+
 -------------------------------VIEW-------------------------------
 
 create or alter view [api].showPersonal 
