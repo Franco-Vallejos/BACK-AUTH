@@ -170,11 +170,22 @@ create table [dbo].request(
 	originDni int check (originDni < 99999999 and originDni>10000000),
 	originDate date,
 	destinationDni int check (destinationDni < 99999999 and destinationDni>10000000),
-	destinationDate date
+	destinationDate date,
+	[state] int default (3)
+)
+
+create table [dbo].[state] (
+	id int primary key,
+	[state] varchar(8)
 )
 
 insert into dbo.request (originDni, originDate, destinationDni, destinationDate) values (43386520, DATEFROMPARTS(2024, 01, 31), 60000000, DATEFROMPARTS(2024, 02, 28))
 insert into dbo.request (originDni, originDate, destinationDni, destinationDate) values (60000000, DATEFROMPARTS(2024, 01, 30), 43386520, DATEFROMPARTS(2024, 02, 26))
+
+insert into [dbo].[state] (id, [state]) values (1, 'accepted')
+insert into [dbo].[state] (id, [state]) values (2, 'rejected')
+insert into [dbo].[state] (id, [state]) values (3, 'waiting')
+
 
 select * from dbo.request
 -------------------------------CONSTRAINT-------------------------------
@@ -212,6 +223,9 @@ references personal(dni)
 alter table [months].december add constraint december_FK foreign key (dni)
 references personal(dni)
 
+alter table [dbo].request add constraint [state_FK] foreign key ([state])
+references [dbo].[state](id)
+
 -------------------------------LOTE DE PRUEBA-------------------------------
 
 insert into [dbo].personal (namesurname, dni) values ('Vallejos Franco', 43386520)
@@ -236,6 +250,12 @@ insert into months.march(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [
 insert into months.march (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.march (dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.march(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
+
+insert into months.april(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (50000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.april (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.april (dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.april(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
+
 
 update montHs.march set [27] = 'TTM' where dni = 43386520
 go
@@ -275,11 +295,14 @@ create or alter procedure [api].showUserRequest (@dni int)
 WITH EXECUTE AS OWNER
 as
 begin
-	declare @SQLDinamic nvarchar(max);
-	set @SQLDinamic = N'select * from [dbo].request where originDni = ' + cast(@dni as varchar) + N' or destinationDni = ' + cast(@dni as varchar); 
-	exec sys.[sp_executesql] @SQLDinamic;
+
+	select r.id, r.originDni, r.originDate, r.destinationDni, r.destinationDate, s.[state] from [dbo].request as r 
+	inner join [dbo].[state] as s on 
+	s.id = r.[state]
+	where originDni = @dni or destinationDni =  @dni
 END
 go
+
 
 create or alter procedure [api].insertOnRequest (@originDni int, @originDate date, @destinationDni int, @destinationDate date)
 WITH EXECUTE AS OWNER
@@ -298,6 +321,14 @@ WITH EXECUTE AS OWNER
 as
 begin
 	delete from dbo.request where id = @id;
+end
+go
+
+create or alter procedure [api].rejectRequest (@id int)
+WITH EXECUTE AS OWNER
+as
+begin
+	update dbo.request set [state] = 2 where id = @id;
 end
 go
 
@@ -335,7 +366,11 @@ BEGIN
 
     SET @SQLDynamic = N'UPDATE [months].' + DATENAME(MONTH, @destinationDate) + N' SET [' + CAST(DAY(@destinationDate) AS NVARCHAR) + N'] = NULL WHERE dni = ' +  CAST(@destinationDni AS NVARCHAR) + N';'
     EXEC sys.sp_executesql @SQLDynamic;
+
+	update [dbo].request set [state] = 1 where id = @id
 END
+
+
 
 
 update [months].March set [27] = (select [27] from [months].March where dni = 43386520) where dni = 50000000;

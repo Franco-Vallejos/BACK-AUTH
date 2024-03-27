@@ -38,8 +38,6 @@ create table [user].tokenTable(
 )
 go
 
-drop table [user].tokenTable
-
 -------------------------------CONSTRAINT-------------------------------
 
 alter table [user].tokenTable add constraint tokenTable_FK foreign key (username)
@@ -80,6 +78,26 @@ begin
 end
 go
 
+create or alter procedure [api].setToken (@user int, @token varchar(max))
+WITH EXECUTE AS OWNER 
+as 
+begin
+	if exists (select 1 from [user].tokenTable where username = @user)
+		update [user].tokenTable set token = @token where username = @user
+	else
+		insert into [user].tokenTable (username, token) values (@user, @token)
+end
+go
+
+create or alter procedure [api].getUserFromToken (@token varchar(max))
+WITH EXECUTE AS OWNER 
+as 
+begin
+	select username from [user].tokenTable where token = @token
+end
+go
+
+
 
 select * from [user].tokenTable
 
@@ -91,5 +109,5 @@ exec [api].getUserFromToken N'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7I
 create or alter view [api].showRefreshToken 
 with SCHEMABINDING 
 AS
-select * from [user].tokenTable
+select username, token from [user].tokenTable
 go

@@ -131,3 +131,40 @@ export const deleteUserRequest = async(req, res) => {
     }
 }
 
+export const acceptUserRequest = async(req, res) => {
+    const {id} = req.body;
+
+    if(!id){
+        return res.status(600).json(jsonResponse(600, {error: "Missing information"}));
+    }
+    
+    try{
+        const pool = await getConnectionCalendar();
+        const result = await pool.request()
+                        .query('exec [api].updateCalendar ' + id + ';')
+        pool.close();
+        res.status(200).json(jsonResponse(200, {message: "update Calendar"}))
+    }catch(error){
+        console.log(error);
+        res.status(800).json(jsonResponse(800, {error: "The server has problems whit DDBB"}))
+    }
+}
+
+export const rejectUserRequest = async(req, res) => {
+    const {id} = req.body;
+
+    if(!id){
+        return res.status(600).json(jsonResponse(600, {error: "Missing information"}));
+    }
+    
+    try{
+        const pool = await getConnectionCalendar();
+        const result = await pool.request()
+                        .query('exec [api].rejectRequest ' + id + ';')
+        pool.close();
+        res.status(200).json(jsonResponse(200, {message: "update request"}))
+    }catch(error){
+        console.log(error);
+        res.status(800).json(jsonResponse(800, {error: "The server has problems whit DDBB"}))
+    }
+}

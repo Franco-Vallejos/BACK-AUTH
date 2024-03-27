@@ -35,7 +35,7 @@ export const getLogin = async (req, res) => {
         userData = result.recordset[0];
         pool.close();
         if(!userData || userData.password != password){
-            return res.status(400).json(jsonResponse(450, {error : "Incorrect username or password"}));
+          return res.status(400).json(jsonResponse(450, {error : "Incorrect username or password"}));
         }
         
     }catch(error){
@@ -52,8 +52,8 @@ export const getLogin = async (req, res) => {
 export const getRefreshToken = async (req, res) => {
     const refreshToken = req.body.refreshToken;
     if (!refreshToken) {
-    console.log("No se proporcionó token de actualización", refreshToken);
-    return res
+        console.log("No se proporcionó token de actualización", refreshToken);
+        return res
         .status(401)
         .json({ error: "Token de actualización no proporcionado" });
     }
@@ -64,8 +64,7 @@ export const getRefreshToken = async (req, res) => {
         if (!tokenDocument.recordset[0]) {
             return res.status(403).json({ error: "Token de actualización inválido" });
         }
-        
-        const payload = verifyRefreshToken(tokenDocument.recordset[0].token);
+        const payload = verifyRefreshToken(refreshToken);
         
         const result = await pool.request()
         .query("exec [api].getUserData N'" + tokenDocument.recordset[0].username + "';")

@@ -7,8 +7,10 @@ const dbSettings = {
     password: config.passwordCalendar,
     server: config.serverCalendar,
     database: config.dataBaseCalendar,
-    encrypt: true,
-    trustServerCertificate: true,
+    options: {
+        encrypt: true, // for azure
+        trustServerCertificate: true, // change to true for local dev / self-signed certs
+      },
 }
 
 export async function getConnectionCalendar() {
