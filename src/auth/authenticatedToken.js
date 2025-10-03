@@ -20,8 +20,6 @@ function authenticateToken(req, res, next) {
     try {
       const decoded = verifyAccessToken(token);
       req.user = decoded.user;
-      console.log("Este es el user :")
-      console.log(req.user)
       next();
     } catch (err) {
       console.log("6 Token inválido", token, err);

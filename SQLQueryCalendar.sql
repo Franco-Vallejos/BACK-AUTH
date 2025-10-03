@@ -3,14 +3,6 @@ go
 use calendar
 go
 
-EXEC sp_configure 'show advanced options', 1;
-go
-RECONFIGURE;
-go
-EXEC sp_configure 'default time zone', 3; -- GMT-3:00 (Buenos Aires, Argentina)
-go
-RECONFIGURE;
-
 create schema [months]
 go
 create schema [api]
@@ -225,13 +217,15 @@ references personal(dni)
 
 alter table [dbo].request add constraint [state_FK] foreign key ([state])
 references [dbo].[state](id)
-
+go
 -------------------------------LOTE DE PRUEBA-------------------------------
 
 insert into [dbo].personal (namesurname, dni) values ('Vallejos Franco', 43386520)
 insert into [dbo].personal (namesurname, dni) values ('Roldan Gonza', 50000000)
 insert into [dbo].personal (namesurname, dni) values ('Sloboyen Carlos', 60000000)
 insert into [dbo].personal (namesurname, dni) values ('Quatrano Marcos', 70000000)
+insert into [dbo].personal (namesurname, dni) values ('Esquivel Diego', 80000000)
+insert into [dbo].personal (namesurname, dni) values ('Torres Jose', 90000000)
 go
 
 insert into months.january (dni, [1], [2], [4], [6], [8], [10]) values (43386520, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM')
@@ -246,19 +240,17 @@ insert into months.february (dni, [2], [3], [5], [7], [9]) values (60000000, 'TT
 insert into months.february(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
 go
 
-insert into months.march(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (50000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
-insert into months.march (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
-insert into months.march (dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
-insert into months.march(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
+insert into months.november(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (50000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.november(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.november(dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
+insert into months.november(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
 
 insert into months.april(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (50000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.april (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (43386520, 'TTT', 'TTM', 'TTT', 'TTM', 'TTT', 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.april (dni, [2], [3], [5], [7], [9], [15], [17], [20], [25]) values (60000000, 'TTT', 'TTT', 'TTM', 'TTT', 'TTM', 'TTM', 'TTT', 'TTM', 'TTT')
 insert into months.april(dni, [2], [3], [5]) values (70000000, 'TTM', 'TTM', 'TTM')
-
-
-update montHs.march set [27] = 'TTM' where dni = 43386520
-go
+insert into months.april(dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25]) values (80000000, 'RTT', 'RTT', 'RTM', 'RTT', 'RTM', 'RTM', 'RTM', 'RTT', 'RTM', 'RTT')
+insert into months.april (dni, [1], [2], [4], [6], [8], [10], [15], [17], [20], [25], [27]) values (90000000, 'RTT', 'RTM', 'RTT', 'RTM', 'RTT', 'RTT', 'RTT', 'RTM', 'RTT', 'RTM', 'RTT')
 
 -------------------------------STORE PROCEDURE-------------------------------
 
@@ -370,11 +362,6 @@ BEGIN
 	update [dbo].request set [state] = 1 where id = @id
 END
 
-
-
-
-update [months].March set [27] = (select [27] from [months].March where dni = 43386520) where dni = 50000000;
-
 exec [api].InsertOnRequest 43386520, '2024-2-26',  50000000, '2024-2-25';
 exec [api].insertOnRequest 43386520, '2024-3-27', 50000000, '2024-3-25';
 delete from dbo.request
@@ -400,4 +387,6 @@ go
 
 select * from api.showPersonal
 
-exec api.showCalendar 'march'
+exec api.showCalendar 'april'
+
+select * from months.april

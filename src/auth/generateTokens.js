@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import config from "../config.js";
 
 function sing(payload, isAccessToken){
-    console.log(payload)
     return jwt.sign(payload, isAccessToken ? config.acces_token_secret : config.refresh_token_secret, 
                     {
                         algorithm : "HS256",
