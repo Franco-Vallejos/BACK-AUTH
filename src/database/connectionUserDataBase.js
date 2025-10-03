@@ -12,7 +12,6 @@ const dbSettings = {
         trustServerCertificate: true, // change to true for local dev / self-signed certs
       },
 }
-
 export async function getConnectionLogin() {
     try{
         const pool = await sql.connect(dbSettings);

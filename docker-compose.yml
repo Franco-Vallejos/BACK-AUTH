@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: express-api
+    ports:
+      - "5000:5000"
+    environment:
+      USER_LOGIN: loginUserData
+      PASSWORD_LOGIN: sqlUserData
+      USER_CALENDAR: calendar
+      PASSWORD_CALENDAR: sqlcalendar
+      DATABASE_LOGIN: userDataBase
+      DATABASE_CALENDAR: calendar
+      SERVER_LOGIN: host.docker.internal
+      SERVER_CALENDAR: host.docker.internal
+      INSTANCE_NAME: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

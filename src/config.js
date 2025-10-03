@@ -13,4 +13,5 @@ export default{
     passwordCalendar: process.env.PASSWORD_CALENDAR || '',
     serverCalendar: process.env.SERVER_CALENDAR || '',
     dataBaseCalendar: process.env.DATABASE_CALENDAR || '',
+    instanceName: process.env.INSTANCE_NAME || ''
 }
